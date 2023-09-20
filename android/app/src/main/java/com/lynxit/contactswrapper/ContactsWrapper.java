@@ -96,9 +96,10 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType(ContactsContract.Contacts.CONTENT_TYPE);
             mCtx = getCurrentActivity();
-            if (intent.resolveActivity(mCtx.getPackageManager()) != null) {
+            /*if (intent.resolveActivity(mCtx.getPackageManager()) != null) {
                 mCtx.startActivityForResult(intent, requestCode);
-            }
+            }*/
+            mCtx.startActivityForResult(intent, requestCode);
             cursor.close();
         }else{
             mContactsPromise.reject(E_CONTACT_PERMISSION, "no permission");
@@ -109,8 +110,8 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
     public void onActivityResult(Activity ContactsWrapper, final int requestCode, final int resultCode, final Intent intent) {
 
         if(mContactsPromise == null || mCtx == null
-              || (requestCode != CONTACT_REQUEST && requestCode != EMAIL_REQUEST)){
-          return;
+                || (requestCode != CONTACT_REQUEST && requestCode != EMAIL_REQUEST)){
+            return;
         }
 
         String email = null;
@@ -143,8 +144,9 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
 
                             // Create the projection (SQL fields) and sort order.
                             String[] projection = {
-                                ContactsContract.Contacts.Entity.MIMETYPE,
-                                ContactsContract.Contacts.Entity.DATA1
+                                    ContactsContract.Contacts.Entity.MIMETYPE,
+                                    ContactsContract.Contacts.Entity.DATA1,
+                                    ContactsContract.Contacts.Entity.CONTACT_ID
                             };
                             String sortOrder = ContactsContract.Contacts.Entity.RAW_CONTACT_ID + " ASC";
                             cursor = this.contentResolver.query(contactUri, projection, null, null, sortOrder);
@@ -161,6 +163,11 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
                             int dataIdx = cursor.getColumnIndex(ContactsContract.Contacts.Entity.DATA1);
                             int mimeIdx = cursor.getColumnIndex(ContactsContract.Contacts.Entity.MIMETYPE);
                             if (cursor.moveToFirst()) {
+
+                                int rawIdx = cursor.getColumnIndex(ContactsContract.Contacts.Entity.CONTACT_ID);
+                                String rawconttt = cursor.getString(rawIdx);
+                                contactData.putString("contactId", rawconttt);
+
                                 do {
                                     mime = cursor.getString(mimeIdx);
                                     if(returnKeys.containsKey(mime)) {
@@ -193,8 +200,8 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
 
                             // query for everything email
                             Cursor cursor = mCtx.getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                                                                            null, ContactsContract.CommonDataKinds.Email.CONTACT_ID + "=?", new String[]{id},
-                                                                            null);
+                                    null, ContactsContract.CommonDataKinds.Email.CONTACT_ID + "=?", new String[]{id},
+                                    null);
 
                             int emailIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
 
@@ -229,3 +236,4 @@ public class ContactsWrapper extends ReactContextBaseJavaModule implements Activ
 
     }
 }
+
